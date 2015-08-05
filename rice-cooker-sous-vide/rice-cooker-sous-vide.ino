@@ -12,6 +12,10 @@
 // Output Relay
 #define RelayPin 2
 
+// ************************************************
+// Sensor Variables and constants
+// Data wire is plugged into port 12 on the Arduino
+
 // One-Wire Temperature Sensor
 // (Use GPIO pins for power/ground to simplify the wiring)
 #define ONE_WIRE_BUS 12
@@ -53,7 +57,7 @@ const int KdAddress = 24;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 // 10 second Time Proportional Output window
-int WindowSize = 500; 
+int WindowSize = 10000; 
 unsigned long windowStartTime;
 
 // ************************************************
@@ -66,7 +70,6 @@ double aTuneNoise=1;
 unsigned int aTuneLookBack=20;
 
 boolean tuning = false;
-long now = millis();
 
 PID_ATune aTune(&Input, &Output);
 
@@ -77,10 +80,8 @@ enum operatingState { OFF = 0, SETP, RUN, TUNE_P, TUNE_I, TUNE_D, AUTO};
 operatingState opState = OFF;
 
 void setup(void) {
-  Setpoint = 55;
+  Setpoint = 40;
   Serial.begin(9600);
-  pinMode(2, OUTPUT);
-  digitalWrite(2, HIGH);
   Serial.println("starting program");
   
    // Start up the DS18B20 One Wire Temperature Sensor
@@ -92,20 +93,6 @@ void setup(void) {
    }
    sensors.setResolution(tempSensor, 12);
    sensors.setWaitForConversion(false);
-   
-  
-    // ************************************************
-    // Sensor Variables and constants
-    // Data wire is plugged into port 12 on the Arduino
-    
-    // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
-    OneWire oneWire(ONE_WIRE_BUS);
-    
-   // Pass our oneWire reference to Dallas Temperature. 
-   DallasTemperature sensors(&oneWire);
-    
-   // arrays to hold device address
-   DeviceAddress tempSensor;
     
    pinMode(RelayPin, OUTPUT);    // Output mode to drive relay
    digitalWrite(RelayPin, LOW);  // make sure it is off to start
@@ -113,6 +100,12 @@ void setup(void) {
    // Initialize the PID and related variables
    LoadParameters();
    myPID.SetTunings(Kp,Ki,Kd);
+   Serial.print("Kp: ");
+   Serial.println(Kp);
+   Serial.print("Ki: ");
+   Serial.println(Ki);
+   Serial.print("Kd: ");
+   Serial.println(Kd);
   
    myPID.SetSampleTime(1000);
    myPID.SetOutputLimits(0, WindowSize);
@@ -129,7 +122,6 @@ void setup(void) {
   sensors.requestTemperatures(); // Start an asynchronous temperature reading
   
   //turn the PID on
-   LoadParameters();
    myPID.SetMode(AUTOMATIC);
    windowStartTime = millis();
    opState = RUN;
@@ -153,7 +145,7 @@ SIGNAL(TIMER2_OVF_vect)
 void loop(void) {
   
   Serial.println("temp: " + String(Input) + " C");
-  if (!alreadyTuned and !tuning)
+  if (!alreadyTuned && !tuning && false)
   {
     StartAutoTune();
   }
@@ -165,15 +157,14 @@ void loop(void) {
 // Called by ISR every 15ms to drive the output
 // ************************************************
 void DriveOutput()
-{  
-  now = millis();
+{
   // Set the output
   // "on time" is proportional to the PID output
-  if(now - windowStartTime>WindowSize)
+  if(millis() - windowStartTime>WindowSize)
   { //time to shift the Relay Window
      windowStartTime += WindowSize;
   }
-  if((onTime > 100) && (onTime > (now - windowStartTime)))
+  if((Output > (millis() - windowStartTime)))
   {
      digitalWrite(RelayPin,HIGH);
   }
@@ -204,14 +195,16 @@ void DoControl()
   }
   else // Execute control algorithm
   {
+    Serial.println("computing PID");
      myPID.Compute();
   }
   
   // Time Proportional relay state is updated regularly via timer interrupt.
-  onTime = Output;
   Serial.println("output time on setpoint: " + String(Output));
   Serial.print("now - windowStartTime: ");
-  Serial.println(now - windowStartTime);
+  Serial.println(millis() - windowStartTime);
+  Serial.print("setpoint: ");
+  Serial.println(Setpoint);
 }
 
 void StartAutoTune()
@@ -285,7 +278,7 @@ void LoadParameters()
    // Use defaults if EEPROM values are invalid
    if (isnan(Setpoint))
    {
-     Setpoint = 60;
+     Setpoint = 40;
    }
    if (isnan(Kp))
    {
