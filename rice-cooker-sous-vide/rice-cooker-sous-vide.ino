@@ -145,7 +145,7 @@ SIGNAL(TIMER2_OVF_vect)
 void loop(void) {
   
   Serial.println("temp: " + String(Input) + " C");
-  if (!alreadyTuned && !tuning && false)
+  if (!alreadyTuned && !tuning)
   {
     StartAutoTune();
   }
@@ -218,6 +218,9 @@ void StartAutoTune()
    aTune.SetNoiseBand(aTuneNoise);
    aTune.SetOutputStep(aTuneStep);
    aTune.SetLookbackSec((int)aTuneLookBack);
+   aTune.SetControlType(1); // set PID control, 0 is PI control
+   Serial.print("autotune lookback: ");
+   Serial.println(aTune.GetLookbackSec());
    tuning = true;
 }
 
