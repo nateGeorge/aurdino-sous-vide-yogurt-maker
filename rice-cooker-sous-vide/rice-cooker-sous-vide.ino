@@ -57,7 +57,7 @@ const int KdAddress = 24;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 // 10 second Time Proportional Output window
-int WindowSize = 10000; 
+int WindowSize = 5000; 
 unsigned long windowStartTime;
 
 // ************************************************
@@ -107,7 +107,7 @@ void setup(void) {
    Serial.print("Kd: ");
    Serial.println(Kd);
   
-   myPID.SetSampleTime(1000);
+   myPID.SetSampleTime(WindowSize/2);
    myPID.SetOutputLimits(0, WindowSize);
   
   // Run timer2 interrupt every 15 ms so the pulse timing will be accurate
@@ -195,6 +195,7 @@ void DoControl()
   }
   else // Execute control algorithm
   {
+    Serial.println("");
     Serial.println("computing PID");
      myPID.Compute();
   }
