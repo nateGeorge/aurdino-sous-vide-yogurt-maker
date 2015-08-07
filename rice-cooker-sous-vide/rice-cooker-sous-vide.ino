@@ -145,7 +145,7 @@ SIGNAL(TIMER2_OVF_vect)
 void loop(void) {
   
   Serial.println("temp: " + String(Input) + " C");
-  if (!alreadyTuned && !tuning)
+  if (!alreadyTuned && !tuning && false)
   {
     StartAutoTune();
   }
@@ -286,7 +286,7 @@ void LoadParameters()
    }
    if (isnan(Kp))
    {
-     Kp = 50;
+     Kp = 10;
      alreadyTuned = false;
    }
    if (isnan(Ki))
