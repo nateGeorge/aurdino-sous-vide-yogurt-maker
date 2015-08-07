@@ -164,7 +164,7 @@ void DriveOutput()
   { //time to shift the Relay Window
      windowStartTime += WindowSize;
   }
-  if((Output > (millis() - windowStartTime)))
+  if((Output > (millis() - windowStartTime) && Setpoint>Input)) // for now, don't let the heater turn on if we exceed the setpoint
   {
      digitalWrite(RelayPin,HIGH);
   }
@@ -282,21 +282,21 @@ void LoadParameters()
    // Use defaults if EEPROM values are invalid
    if (isnan(Setpoint))
    {
-     Setpoint = 40;
+     Setpoint = 60;
    }
    if (isnan(Kp))
    {
-     Kp = 10;
+     Kp = 1;
      alreadyTuned = false;
    }
    if (isnan(Ki))
    {
-     Ki = 0.5;
+     Ki = 5;
      alreadyTuned = false;
    }
    if (isnan(Kd))
    {
-     Kd = 0.1;
+     Kd = 0;
      alreadyTuned = false;
    }  
 }
