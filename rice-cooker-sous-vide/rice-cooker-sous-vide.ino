@@ -80,7 +80,7 @@ enum operatingState { OFF = 0, SETP, RUN, TUNE_P, TUNE_I, TUNE_D, AUTO};
 operatingState opState = OFF;
 
 void setup(void) {
-  Setpoint = 40;
+  Setpoint = 43;
   Serial.begin(9600);
   Serial.println("starting program");
   
@@ -282,7 +282,7 @@ void LoadParameters()
    // Use defaults if EEPROM values are invalid
    if (isnan(Setpoint))
    {
-     Setpoint = 60;
+     Setpoint = 43;
    }
    if (isnan(Kp))
    {
